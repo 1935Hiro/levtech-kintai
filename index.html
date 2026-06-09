@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="勤怠">
+  <link rel="manifest" href="manifest.json">
+  <title>勤怠記録</title>
+</head>
+<body>
+  <script>
+    function roundUpTo15(date) {
+      const ms = date.getTime();
+      const interval = 15 * 60 * 1000;
+      const rounded = Math.ceil(ms / interval) * interval;
+      return new Date(rounded);
+    }
+
+    function formatTime(date) {
+      const h = String(date.getHours()).padStart(2, '0');
+      const m = String(date.getMinutes()).padStart(2, '0');
+      return h + ':' + m;
+    }
+
+    // 動作確認用
+    console.log(formatTime(roundUpTo15(new Date('2026-01-01T09:00:00')))); // → 09:00
+    console.log(formatTime(roundUpTo15(new Date('2026-01-01T09:01:00')))); // → 09:15
+    console.log(formatTime(roundUpTo15(new Date('2026-01-01T09:16:00')))); // → 09:30
+    console.log(formatTime(roundUpTo15(new Date('2026-01-01T09:31:00')))); // → 09:45
+    console.log(formatTime(roundUpTo15(new Date('2026-01-01T09:45:00')))); // → 09:45
+    console.log(formatTime(roundUpTo15(new Date('2026-01-01T23:46:00')))); // → 00:00
+  </script>
+</body>
+</html>

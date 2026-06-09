@@ -112,9 +112,15 @@
   <div id="status"></div>
 
   <div class="section">
-    <h2>ブックマークレット（初回登録用）</h2>
-    <div class="code-box" id="bm-text"></div>
-    <button class="copy-btn" onclick="copyBM()">コピーする</button>
+    <h2>始業入力ブックマークレット（初回登録用）</h2>
+    <div class="code-box" id="bm-start-text"></div>
+    <button class="copy-btn" onclick="copyBM('start')">始業用をコピー</button>
+  </div>
+
+  <div class="section">
+    <h2>終業入力ブックマークレット（初回登録用）</h2>
+    <div class="code-box" id="bm-end-text"></div>
+    <button class="copy-btn" onclick="copyBM('end')">終業用をコピー</button>
   </div>
 
   <script>
@@ -136,26 +142,31 @@
       const label = type === 'start' ? '始業' : '終業';
       document.getElementById('status').textContent =
         time + ' で' + label + 'を記録しました';
-      window.location.href = LEVTECH_URL + '#auto=' + type + ':' + time;
+      window.location.href = LEVTECH_URL + '#' + type;
     }
 
-    const BM = `javascript:(function(){var h=location.hash;if(!h.includes('auto='))return alert('URLに時刻情報がありません。始業/終業ボタンをタップしてからお試しください');var m=h.match(/auto=(start|end):(\d{2}:\d{2})/);if(!m)return alert('形式エラー');var type=m[1],time=m[2];var today=new Date();var mm=String(today.getMonth()+1).padStart(2,'0');var dd=String(today.getDate()).padStart(2,'0');var label=mm+'/'+dd;var rows=Array.from(document.querySelectorAll('tr'));var row=rows.find(function(r){return r.textContent.replace(/\s/g,'').includes(label);});if(!row)return alert('今日の行('+label+')が見つかりません');var inputs=row.querySelectorAll('input[type=text],input:not([type])');var idx=type==='start'?0:1;var input=inputs[idx];if(!input)return alert('入力フィールドが見つかりません(index:'+idx+')');var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;setter.call(input,time);input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));history.replaceState(null,'',location.pathname+location.search);alert('✅ '+time+' を'+(type==='start'?'開始':'終了')+'に入力しました');})();`;
+    const BM_START = `javascript:(function(){function r(d){return new Date(Math.ceil(d.getTime()/900000)*900000);}function f(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}var time=f(r(new Date()));var t=new Date();var label=String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0');var rows=Array.from(document.querySelectorAll('tr'));var row=rows.find(function(r){return r.textContent.replace(/\s/g,'').includes(label);});if(!row)return alert('今日の行('+label+')が見つかりません');var inputs=row.querySelectorAll('input[type=text],input:not([type])');var input=inputs[0];if(!input)return alert('入力欄が見つかりません');var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;s.call(input,time);input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));alert('✅ '+time+' を開始に入力しました');})();`;
 
-    document.getElementById('bm-text').textContent = BM;
+    const BM_END = `javascript:(function(){function r(d){return new Date(Math.ceil(d.getTime()/900000)*900000);}function f(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}var time=f(r(new Date()));var t=new Date();var label=String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0');var rows=Array.from(document.querySelectorAll('tr'));var row=rows.find(function(r){return r.textContent.replace(/\s/g,'').includes(label);});if(!row)return alert('今日の行('+label+')が見つかりません');var inputs=row.querySelectorAll('input[type=text],input:not([type])');var input=inputs[1];if(!input)return alert('入力欄が見つかりません');var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;s.call(input,time);input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));alert('✅ '+time+' を終了に入力しました');})();`;
 
-    function copyBM() {
+    document.getElementById('bm-start-text').textContent = BM_START;
+    document.getElementById('bm-end-text').textContent = BM_END;
+
+    function copyBM(type) {
+      var code = type === 'start' ? BM_START : BM_END;
+      var label = type === 'start' ? '始業用' : '終業用';
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(BM).then(function() {
-          alert('コピーしました！\n\nSafariのブックマークを編集し、URLをこのコードに貼り替えてください');
+        navigator.clipboard.writeText(code).then(function() {
+          alert(label + 'をコピーしました！\n\nSafariのブックマークを編集し、URLをこのコードに貼り替えてください');
         });
       } else {
         var ta = document.createElement('textarea');
-        ta.value = BM;
+        ta.value = code;
         document.body.appendChild(ta);
         ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
-        alert('コピーしました！');
+        alert(label + 'をコピーしました！');
       }
     }
 

@@ -8,20 +8,159 @@
   <meta name="apple-mobile-web-app-title" content="勤怠">
   <link rel="manifest" href="manifest.json">
   <title>勤怠記録</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 22px;
+      color: #2c3e50;
+      margin-bottom: 40px;
+      letter-spacing: 0.05em;
+    }
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 300px;
+    }
+    .btn {
+      padding: 32px 16px;
+      font-size: 26px;
+      font-weight: 700;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: transform 0.1s, box-shadow 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .btn-start { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+    .btn-end   { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+    #status {
+      margin-top: 28px;
+      font-size: 15px;
+      color: #555;
+      text-align: center;
+      min-height: 22px;
+    }
+    .section {
+      margin-top: 48px;
+      width: 100%;
+      max-width: 300px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .section h2 {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+    .code-box {
+      font-size: 10px;
+      line-height: 1.5;
+      word-break: break-all;
+      color: #333;
+      background: #f7f8fa;
+      padding: 10px;
+      border-radius: 8px;
+      user-select: all;
+      -webkit-user-select: all;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+    .copy-btn {
+      margin-top: 10px;
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
+  <h1>⏱ 勤怠記録</h1>
+
+  <div class="buttons">
+    <button class="btn btn-start" onclick="record('start')">🟢 始業</button>
+    <button class="btn btn-end"   onclick="record('end')">🔴 終業</button>
+  </div>
+
+  <div id="status"></div>
+
+  <div class="section">
+    <h2>ブックマークレット（初回登録用）</h2>
+    <div class="code-box" id="bm-text"></div>
+    <button class="copy-btn" onclick="copyBM()">コピーする</button>
+  </div>
+
   <script>
+    const LEVTECH_URL = 'https://platform.levtech.jp/p/workreport/';
+
     function roundUpTo15(date) {
       const ms = date.getTime();
       const interval = 15 * 60 * 1000;
-      const rounded = Math.ceil(ms / interval) * interval;
-      return new Date(rounded);
+      return new Date(Math.ceil(ms / interval) * interval);
     }
 
     function formatTime(date) {
-      const h = String(date.getHours()).padStart(2, '0');
-      const m = String(date.getMinutes()).padStart(2, '0');
-      return h + ':' + m;
+      return String(date.getHours()).padStart(2, '0') + ':' +
+             String(date.getMinutes()).padStart(2, '0');
+    }
+
+    function record(type) {
+      const time = formatTime(roundUpTo15(new Date()));
+      const label = type === 'start' ? '始業' : '終業';
+      document.getElementById('status').textContent =
+        time + ' で' + label + 'を記録しました';
+      window.location.href = LEVTECH_URL + '#auto=' + type + ':' + time;
+    }
+
+    const BM = `javascript:(function(){var h=location.hash;if(!h.includes('auto='))return alert('URLに時刻情報がありません。始業/終業ボタンをタップしてからお試しください');var m=h.match(/auto=(start|end):(\d{2}:\d{2})/);if(!m)return alert('形式エラー');var type=m[1],time=m[2];var today=new Date();var mm=String(today.getMonth()+1).padStart(2,'0');var dd=String(today.getDate()).padStart(2,'0');var label=mm+'/'+dd;var rows=Array.from(document.querySelectorAll('tr'));var row=rows.find(function(r){return r.textContent.replace(/\s/g,'').includes(label.replace('/',''));});if(!row)return alert('今日の行('+label+')が見つかりません');var inputs=row.querySelectorAll('input[type=text],input:not([type])');var idx=type==='start'?0:1;var input=inputs[idx];if(!input)return alert('入力フィールドが見つかりません(index:'+idx+')');var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;setter.call(input,time);input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));history.replaceState(null,'',location.pathname+location.search);alert('✅ '+time+' を'+(type==='start'?'開始':'終了')+'に入力しました');})();`;
+
+    document.getElementById('bm-text').textContent = BM;
+
+    function copyBM() {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(BM).then(function() {
+          alert('コピーしました！\n\nSafariのブックマークを編集し、URLをこのコードに貼り替えてください');
+        });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = BM;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('コピーしました！');
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
     }
   </script>
 </body>
